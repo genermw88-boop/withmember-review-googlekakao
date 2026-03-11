@@ -17,18 +17,22 @@ with col2:
 with col3:
     menu = st.text_input("🍽️ 주력메뉴", placeholder="예: 마라탕")
 
-# API 키 설정 (스트림릿 클라우드 환경변수에서 가져옴)
-API_KEY = os.environ.get("GEMINI_API_KEY")
+# API 키 가져오기 (Streamlit 클라우드 환경에 맞게 보완)
+try:
+    API_KEY = st.secrets["GEMINI_API_KEY"]
+except:
+    API_KEY = os.environ.get("GEMINI_API_KEY")
 
 if st.button("리뷰 20개 생성하기 (구글 10 + 카맵 10)", type="primary"):
     if not API_KEY:
-        st.error("API 키가 설정되지 않았습니다. 관리자에게 문의하세요.")
+        st.error("API 키가 설정되지 않았습니다. 스트림릿 Advanced settings의 Secrets에 API 키를 입력해주세요.")
     elif region and store_name and menu:
         with st.spinner('실제 방문객 데이터를 분석하여 리뷰를 작성 중입니다... ⏳'):
             try:
                 genai.configure(api_key=API_KEY)
-                # Gemini 1.5 Flash 모델 사용 (빠르고 저렴함)
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                
+                # 오류가 발생했던 모델명을 가장 안정적인 모델로 변경했습니다.
+                model = genai.GenerativeModel('gemini-pro')
                 
                 prompt = f"""
                 당신은 식당/매장 방문객처럼 자연스러운 후기를 작성하는 리뷰 생성기입니다.
@@ -47,7 +51,7 @@ if st.button("리뷰 20개 생성하기 (구글 10 + 카맵 10)", type="primary"
                 2. 카카오맵 리뷰 스타일 (10개)
                 - 매우 솔직하고 직설적, 맛과 가성비 등 핵심만 짚음. 단답형, 음슴체, 반말 위주 ("~함", "맛있음", "그냥 그럼").
                 
-                결과는 마크다운 형식을 사용하여 구글과 카카오맵 섹션을 나누어 깔끔하게 보여주세요.
+                결과는 마크다운 형식을 사용하여 구글과 카카오맵 섹션을 나누어 번호를 매겨 깔끔하게 보여주세요.
                 """
                 
                 response = model.generate_content(prompt)
